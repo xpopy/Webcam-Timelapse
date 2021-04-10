@@ -141,6 +141,7 @@ def main():
 			last_image = get_latest_image(image_folder)
 			if last_image:
 				image_index = int(last_image.replace(f'{image_folder}\{image_name}','').replace(f'.{image_type}',''))
+				image_index += 1 # add one so we don't replace the last image
 
 			#Start/stop timelapse
 			if runTimelapse:
