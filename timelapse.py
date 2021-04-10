@@ -9,13 +9,17 @@ import PySimpleGUI as gui
 from PIL import Image
 
 # https://pysimplegui.readthedocs.io/en/latest/call%20reference/#slider-element
+# https://www.geeksforgeeks.org/display-date-and-time-in-videos-using-python-opencv/
 
 
 
 image_folder = 'img'
+image_name = 'image'
 image_type = 'jpg'
 preview_width = 400
 preview_height = 400
+delay_between_photos = 5 #in seconds
+next_photo_time = None
 
 
 def get_latest_image(dirpath, valid_extensions=('jpg','jpeg','png')):
@@ -38,7 +42,13 @@ def prepareCamera():
 	camera.set(4, 1080)
 	return camera
 
+def convertCV2toImage(cv2image):
+	b,g,r = cv2.split(cv2image)
+	tmp = cv2.merge((r,g,b))
+	return Image.fromarray(tmp)
+
 def updatePreview(window, image):
+	image = convertCV2toImage(image)
 	image.thumbnail((preview_width, preview_height))
 	bio = io.BytesIO()
 	image.save(bio, format="PNG")
@@ -46,9 +56,10 @@ def updatePreview(window, image):
 
 def takePicture(camera):
 	return_value, cv2image = camera.read()
-	b,g,r = cv2.split(cv2image)
-	img = cv2.merge((r,g,b))
-	return Image.fromarray(img)
+	return cv2image
+
+def saveImage(image, i):
+	cv2.imwrite(f'{image_folder}/{image_name}{str(i)}.jpg', image)
 
 def setupFolder():
 	folder = os.path.isdir(image_folder)
@@ -72,46 +83,46 @@ def main():
 
 	window["-LOADING-"].update(visible=False)
 
-	lastImage = ''
 	runTimelapse = False
-	runTest = False
+	time_change = datetime.timedelta(seconds=delay_between_photos)
+	next_photo_time = None
+	image_index = 0
+
 	while True:	
-		event, values = window.Read(timeout=1000) #60s timeout
+		event, values = window.Read(timeout=1000) #1s timeout
 		
 		if event == "Exit" or event == gui.WIN_CLOSED:
 			break
 
 		if event == "Test Camera":
-			runTest = not runTest
-			runTimelapse = False
+			image = takePicture(camera)
+			updatePreview(window, image)
 
 		if event == "Start Camera":
+			#update image_index
+			last_image = get_latest_image(image_folder)
+			if last_image:
+				image_index = int(last_image.replace(f'{image_folder}\{image_name}','').replace(f'.{image_type}',''))
+
 			runTimelapse= not runTimelapse
-			runTest = False
 			#show element with green or something
 			
-
 		if event == gui.TIMEOUT_KEY:
-			if runTest:
-				#Show live view of camera
-				image = takePicture(camera)
-				updatePreview(window, image)
-				continue
-
 			if not runTimelapse:
+				#only run if runTimelapse is True
 				continue
 			
-			last_image = get_latest_image(image_folder)
-
-			if not last_image:
+			now = datetime.datetime.now()
+			if next_photo_time and now < next_photo_time:
+				#skip if last_photo_time exists and current time is past the next_photo time
 				continue
 
-			if last_image == lastImage:
-				continue
-
-			lastImage = last_image
-			image = Image.open(last_image)
+			image = takePicture(camera)
+			saveImage(image, image_index)
 			updatePreview(window, image)
+
+			image_index+= 1
+			next_photo_time = now + time_change
 
 
 	window.close()
