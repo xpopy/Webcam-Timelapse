@@ -127,6 +127,9 @@ def main():
 				window["-INPUT-DELAY-"].set_focus()
 				continue
 
+			#Reset next_photo_time
+			next_photo_time = None
+
 			#Update image_index from the last saved image
 			last_image = get_latest_image(image_folder)
 			if last_image:
