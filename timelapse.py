@@ -54,7 +54,7 @@ def updatePreview(window, image):
 	image.save(bio, format="PNG")
 	window["-IMAGE-"].update(data=bio.getvalue())
 
-def takePicture(camera):
+def takePhoto(camera):
 	return_value, cv2image = camera.read()
 	return cv2image
 
@@ -95,7 +95,7 @@ def main():
 			break
 
 		if event == "Test Camera":
-			image = takePicture(camera)
+			image = takePhoto(camera)
 			updatePreview(window, image)
 
 		if event == "Start Camera":
@@ -117,7 +117,8 @@ def main():
 				#skip if last_photo_time exists and current time is past the next_photo time
 				continue
 
-			image = takePicture(camera)
+			#Take a photo
+			image = takePhoto(camera)
 			saveImage(image, image_index)
 			updatePreview(window, image)
 
