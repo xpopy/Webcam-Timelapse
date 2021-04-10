@@ -59,6 +59,13 @@ def saveImage(image_folder, image_name, image_type, image, i):
 def setStatus(window, text):
 	window["-STATUS-"].update(value=text)
 
+def updateCountdown(window, next_photo_time):
+	now = datetime.datetime.now()
+	time_left = next_photo_time - now
+	if time_left > datetime.timedelta(0):
+		#Only update timer if it's positive
+		window['-TIME-LEFT-'].update(value = str(time_left).split(".")[0])
+
 def setupFolder(image_folder):
 	folder = os.path.isdir(image_folder)
 	# If folder doesn't exist, then create it.
@@ -168,13 +175,10 @@ def main():
 			if not runTimelapse:
 				continue
 			
-			now = datetime.datetime.now()
 			if next_photo_time:
-				time_left = next_photo_time - now
-				if time_left > datetime.timedelta(0):
-					#Only update timer if it's positive
-					window['-TIME-LEFT-'].update(value = str(time_left).split(".")[0])
+				updateCountdown(window, next_photo_time)
 
+			now = datetime.datetime.now()
 			#skip if last_photo_time exists and current time is past the next_photo time
 			if next_photo_time and now < next_photo_time:
 				continue
@@ -186,11 +190,9 @@ def main():
 
 			#Increment image index for name, and set time for next photo
 			image_index+= 1
-			now = datetime.datetime.now()
 			next_photo_time = now + time_change
 
-			time_left = next_photo_time - now
-			window['-TIME-LEFT-'].update(value = str(time_left).split(".")[0])
+			updateCountdown(window, next_photo_time)
 
 
 	window.close()
