@@ -12,16 +12,6 @@ from PIL import Image
 # https://www.geeksforgeeks.org/display-date-and-time-in-videos-using-python-opencv/
 
 
-
-image_folder = 'img'
-image_name = 'image'
-image_type = 'jpg'
-preview_width = 400
-preview_height = 400
-delay_between_photos = 5 #in seconds
-next_photo_time = None
-
-
 def get_latest_image(dirpath, valid_extensions=('jpg','jpeg','png')):
 	"""
 	Get the latest image file in the given directory
@@ -43,25 +33,37 @@ def prepareCamera():
 	return camera
 
 def convertCV2toImage(cv2image):
-	b,g,r = cv2.split(cv2image)
-	tmp = cv2.merge((r,g,b))
-	return Image.fromarray(tmp)
+	cv2image_rgb = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB) 
+	return Image.fromarray(cv2image_rgb)
 
-def updatePreview(window, image):
+def updatePreview(window, image, preview_width, preview_height):
 	image = convertCV2toImage(image)
 	image.thumbnail((preview_width, preview_height))
 	bio = io.BytesIO()
 	image.save(bio, format="PNG")
 	window["-IMAGE-"].update(data=bio.getvalue())
 
-def takePhoto(camera):
+def takePhoto(camera, add_date=False):
 	return_value, cv2image = camera.read()
+	if add_date:
+		font = cv2.FONT_HERSHEY_DUPLEX
+		date_now = datetime.datetime.now()
+		formatted_date_now = date_now.strftime("%Y-%m-%d %H:%M:%S")
+		#Add the text on top of the image
+		frame = cv2.putText(cv2image, formatted_date_now,
+							(30, 50),
+							font, 1,
+							(50, 205, 50), 
+							4, cv2.LINE_8)
 	return cv2image
 
-def saveImage(image, i):
-	cv2.imwrite(f'{image_folder}/{image_name}{str(i)}.jpg', image)
+def saveImage(image_folder, image_name, image_type, image, i):
+	cv2.imwrite(f'{image_folder}/{image_name}{str(i)}.{image_type}', image)
 
-def setupFolder():
+def setStatus(window, text):
+	window["-STATUS-"].update(value=text)
+
+def setupFolder(image_folder):
 	folder = os.path.isdir(image_folder)
 	# If folder doesn't exist, then create it.
 	if not folder:
@@ -69,13 +71,26 @@ def setupFolder():
 
 def main():
 
+	#Default settings
+	image_folder = 'img'
+	image_name = 'image'
+	image_type = 'jpg'
+	preview_width = 600
+	preview_height = 800
+	delay_between_photos = 5 #in seconds
+	overlay_date_on_images = True
+	
 	#Create the image folder if it doesn't exist
-	setupFolder()
+	setupFolder(image_folder)
 
 	#The layout of GUI
 	layout = [
 		[gui.Image(key="-IMAGE-")],
-		[gui.Text(key="-LOADING-", text="Loading camera...")],
+		[gui.Text(key="-STATUS-", text="", size=(40, 1))],
+		[	
+			gui.Input(key='-INPUT-DELAY-', enable_events=True, size = (6, None)), 
+			gui.Text(key="-INPUT-DELAY-DESC-", text="Delay in s (ex: 60 = a photo every minute)"),
+		],
 		[
 			gui.Button("Test Camera"),
 			gui.Button("Start Camera"),
@@ -83,11 +98,11 @@ def main():
 	]
 	window = gui.Window("Image Viewer", layout, finalize=True)
 
-	#Load the camera, can take a few seconds depending on camera
-	camera = prepareCamera()
 
-	#Hide the loading text when a camera has been loaded
-	window["-LOADING-"].update(visible=False)
+	#Load the camera, can take a few seconds depending on camera
+	setStatus(window, "Loading camera, this might take a while...")
+	camera = prepareCamera()
+	setStatus(window, "Camera loaded, select your move...")
 
 	#Set up some variables
 	runTimelapse = False
@@ -104,17 +119,49 @@ def main():
 
 		if event == "Test Camera":
 			#Takes a photo and updates the preview
-			image = takePhoto(camera)
-			updatePreview(window, image)
+			image = takePhoto(camera, overlay_date_on_images)
+			updatePreview(window, image, preview_width, preview_height)
 
 		if event == "Start Camera":
+
+			#Make sure -INPUT-DELAY- is set
+			if len(values['-INPUT-DELAY-']) == 0:
+				setStatus(window, "You need to set the delay between photos first")
+				window["-INPUT-DELAY-"].set_focus()
+				continue
+
 			#Update image_index from the last saved image
 			last_image = get_latest_image(image_folder)
 			if last_image:
 				image_index = int(last_image.replace(f'{image_folder}\{image_name}','').replace(f'.{image_type}',''))
 
-			#Toggle runTimelapse to start it
-			runTimelapse= not runTimelapse
+			#Start/stop timelapse
+			if runTimelapse:
+				setStatus(window, "Timelapse stopped")
+				runTimelapse = False
+			else:
+				setStatus(window, "Timelapse running...")
+				runTimelapse = True
+		
+		if event == '-INPUT-DELAY-':
+			val = values['-INPUT-DELAY-']
+			if not val or len(val) == 0:
+				#There's no value, skip
+				continue
+			
+			if val[-1] not in ('0123456789.'):
+				#The last character input is not a number or dot, illegal. No characters allowed in here
+				window['-INPUT-DELAY-'].update(val[:-1])
+				continue
+
+			if len(val) > 5:
+				#Max 5 characters please, I can't take more than that
+				window['-INPUT-DELAY-'].update(val[:-1])
+				continue
+
+			#Finally we can set our delay_between_photos
+			delay_between_photos = int(val)
+			time_change = datetime.timedelta(seconds=delay_between_photos)
 			
 		if event == gui.TIMEOUT_KEY:
 			#only run if runTimelapse is True
@@ -127,14 +174,14 @@ def main():
 				continue
 
 			#Take a photo, save it to disk and update the preview with it
-			image = takePhoto(camera)
-			saveImage(image, image_index)
-			updatePreview(window, image)
+			image = takePhoto(camera, overlay_date_on_images)
+			saveImage(image_folder, image_name, image_type, image, image_index)
+			updatePreview(window, image, preview_width, preview_height)
 
 			#Increment image index for name, and set time for next photo
 			image_index+= 1
 			next_photo_time = now + time_change
-
+			
 
 	window.close()
 if __name__ == "__main__":
