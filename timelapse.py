@@ -93,7 +93,7 @@ def main():
 			gui.Button("Start Camera"),
 		],
 	]
-	window = gui.Window("Image Viewer", layout, finalize=True)
+	window = gui.Window("Timelapse", layout, finalize=True)
 
 
 	#Load the camera, can take a few seconds depending on camera
