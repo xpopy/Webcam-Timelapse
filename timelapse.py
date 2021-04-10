@@ -81,6 +81,7 @@ def main():
 
 	#The layout of GUI
 	layout = [
+		[gui.Text(key="-TIME-LEFT-", text="", size=(40, 1))],
 		[gui.Image(key="-IMAGE-")],
 		[gui.Text(key="-STATUS-", text="", size=(40, 1))],
 		[	
@@ -165,6 +166,12 @@ def main():
 				continue
 			
 			now = datetime.datetime.now()
+			if next_photo_time:
+				time_left = next_photo_time - now
+				if time_left > datetime.timedelta(0):
+					#Only update timer if it's positive
+					window['-TIME-LEFT-'].update(value = str(time_left).split(".")[0])
+
 			#skip if last_photo_time exists and current time is past the next_photo time
 			if next_photo_time and now < next_photo_time:
 				continue
@@ -176,7 +183,11 @@ def main():
 
 			#Increment image index for name, and set time for next photo
 			image_index+= 1
+			now = datetime.datetime.now()
 			next_photo_time = now + time_change
+
+			time_left = next_photo_time - now
+			window['-TIME-LEFT-'].update(value = str(time_left).split(".")[0])
 
 
 	window.close()
