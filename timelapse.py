@@ -44,13 +44,13 @@ def takePhoto(camera, add_date=False):
 	if add_date:
 		font = cv2.FONT_HERSHEY_DUPLEX
 		date_now = datetime.datetime.now()
-		formatted_date_now = date_now.strftime("%Y-%m-%d %H:%M:%S")
+		date_now = date_now.strftime("%Y-%m-%d %H:%M:%S")
 		#Add the text on top of the image
-		frame = cv2.putText(cv2image, formatted_date_now,
-							(30, 50),
-							font, 1,
-							(50, 205, 50), 
-							4, cv2.LINE_8)
+		green = (50, 205, 50)
+		position = (30, 50)
+		font_scale = 1
+		thickness = 1
+		frame = cv2.putText(cv2image, date_now,	position, font, font_scale, green, thickness, cv2.LINE_AA)
 	return cv2image
 
 def saveImage(image_folder, image_name, image_type, image, i):
