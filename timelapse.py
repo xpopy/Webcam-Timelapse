@@ -1,9 +1,6 @@
 import io
 import os
 import cv2
-import sys
-import time
-import signal
 import datetime
 import PySimpleGUI as gui
 from PIL import Image
@@ -24,7 +21,6 @@ def get_latest_image(dirpath, valid_extensions=('jpg','jpeg','png')):
 	if not valid_files:
 		return ''
 	return max(valid_files, key=os.path.getmtime) 
-
 
 def prepareCamera():
 	camera = cv2.VideoCapture(0)
@@ -181,7 +177,7 @@ def main():
 			#Increment image index for name, and set time for next photo
 			image_index+= 1
 			next_photo_time = now + time_change
-			
+
 
 	window.close()
 if __name__ == "__main__":
