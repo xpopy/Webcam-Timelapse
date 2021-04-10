@@ -68,7 +68,11 @@ def setupFolder():
 		os.makedirs(image_folder)
 
 def main():
+
+	#Create the image folder if it doesn't exist
 	setupFolder()
+
+	#The layout of GUI
 	layout = [
 		[gui.Image(key="-IMAGE-")],
 		[gui.Text(key="-LOADING-", text="Loading camera...")],
@@ -79,10 +83,13 @@ def main():
 	]
 	window = gui.Window("Image Viewer", layout, finalize=True)
 
+	#Load the camera, can take a few seconds depending on camera
 	camera = prepareCamera()
 
+	#Hide the loading text when a camera has been loaded
 	window["-LOADING-"].update(visible=False)
 
+	#Set up some variables
 	runTimelapse = False
 	time_change = datetime.timedelta(seconds=delay_between_photos)
 	next_photo_time = None
@@ -92,36 +99,39 @@ def main():
 		event, values = window.Read(timeout=1000) #1s timeout
 		
 		if event == "Exit" or event == gui.WIN_CLOSED:
+			#Always keep a way out
 			break
 
 		if event == "Test Camera":
+			#Takes a photo and updates the preview
 			image = takePhoto(camera)
 			updatePreview(window, image)
 
 		if event == "Start Camera":
-			#update image_index
+			#Update image_index from the last saved image
 			last_image = get_latest_image(image_folder)
 			if last_image:
 				image_index = int(last_image.replace(f'{image_folder}\{image_name}','').replace(f'.{image_type}',''))
 
+			#Toggle runTimelapse to start it
 			runTimelapse= not runTimelapse
-			#show element with green or something
 			
 		if event == gui.TIMEOUT_KEY:
+			#only run if runTimelapse is True
 			if not runTimelapse:
-				#only run if runTimelapse is True
 				continue
 			
 			now = datetime.datetime.now()
+			#skip if last_photo_time exists and current time is past the next_photo time
 			if next_photo_time and now < next_photo_time:
-				#skip if last_photo_time exists and current time is past the next_photo time
 				continue
 
-			#Take a photo
+			#Take a photo, save it to disk and update the preview with it
 			image = takePhoto(camera)
 			saveImage(image, image_index)
 			updatePreview(window, image)
 
+			#Increment image index for name, and set time for next photo
 			image_index+= 1
 			next_photo_time = now + time_change
 
