@@ -62,9 +62,15 @@ def setStatus(window, text):
 def updateCountdown(window, next_photo_time):
 	now = datetime.datetime.now()
 	time_left = next_photo_time - now
-	if time_left > datetime.timedelta(0):
-		#Only update timer if it's positive
-		window['-TIME-LEFT-'].update(value = str(time_left).split(".")[0])
+	if time_left < datetime.timedelta(0):
+		#If time_left is negative set it to 0
+		time_left = datetime.timedelta(0)
+	else:
+		#Round to seconds
+		time_left += datetime.timedelta(seconds=0.5)
+		time_left = str(time_left).split(".")[0]
+
+	window['-TIME-LEFT-'].update(value = f'Time till next photo: {time_left}')
 
 def setupFolder(image_folder):
 	folder = os.path.isdir(image_folder)
