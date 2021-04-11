@@ -2,6 +2,7 @@ import io
 import os
 import cv2
 import datetime
+import numpy as np
 import PySimpleGUI as gui
 from PIL import Image
 
@@ -82,6 +83,23 @@ def updateCountdown(window, next_photo_time):
 
 	window['-TIME-LEFT-'].update(value = f'Time till next photo: {time_left}')
 
+def constrainNumberInput(window, element, length = 5):	
+	val = window[element].get()
+	if not val or len(val) == 0:
+		#There's no value, skip
+		return True
+	
+	if val[-1] not in ('0123456789.'):
+		#The last character input is not a number or dot, illegal. No characters allowed in here
+		window[element].update(val[:-1])
+		return True
+
+	if len(val) > length:
+		#Max 'length' characters please, I can't take more than that
+		window[element].update(val[:-1])
+		return True
+	return False
+
 def setupFolder(image_folder):
 	folder = os.path.isdir(image_folder)
 	# If folder doesn't exist, then create it.
@@ -109,8 +127,12 @@ def main():
 		[gui.Image(key="-IMAGE-")],
 		[gui.Text(key="-STATUS-", text="", size=(40, 1))],
 		[	
-			gui.Input(key='-INPUT-DELAY-', enable_events=True, size = (6, None)), 
-			gui.Text(key="-INPUT-DELAY-DESC-", text="Delay in s (ex: 60 = a photo every minute)"),
+			gui.Input(key='-INPUT-DELAY-', default_text = "300", enable_events=True, size = (6, None)), 
+			gui.Text(key="-INPUT-DELAY-DESC-", text="Delay in s (ex: 300 = a photo every 5 minutes)"),
+		],
+		[	
+			gui.Input(key='-LIGHT-THRESHOLD-', default_text = "0.3", enable_events=True, size = (4, None)), 
+			gui.Text(key="-LIGHT-THRESHOLD-DESC-", text="Light threshold for images, 0-1, where 0 disables it "),
 		],
 		[
 			gui.Button("Test Camera"),
@@ -151,6 +173,12 @@ def main():
 				window["-INPUT-DELAY-"].set_focus()
 				continue
 
+			#Make sure -LIGHT-THRESHOLD- is set
+			if len(values['-LIGHT-THRESHOLD-']) == 0:
+				setStatus(window, "You need to set the light threshold for photos first")
+				window["-LIGHT-THRESHOLD-"].set_focus()
+				continue
+
 			#Reset next_photo_time
 			next_photo_time = None
 
@@ -169,25 +197,22 @@ def main():
 				runTimelapse = True
 		
 		if event == '-INPUT-DELAY-':
-			val = values['-INPUT-DELAY-']
-			if not val or len(val) == 0:
-				#There's no value, skip
-				continue
-			
-			if val[-1] not in ('0123456789.'):
-				#The last character input is not a number or dot, illegal. No characters allowed in here
-				window['-INPUT-DELAY-'].update(val[:-1])
+			if constrainNumberInput(window, '-INPUT-DELAY-', length = 5):
+				#constrainNumberInput returned True, which means it has reverted the change. Skip
 				continue
 
-			if len(val) > 5:
-				#Max 5 characters please, I can't take more than that
-				window['-INPUT-DELAY-'].update(val[:-1])
-				continue
-
-			#Finally we can set our delay_between_photos
-			delay_between_photos = int(val)
+			#Finally we can set our values
+			delay_between_photos = int(values['-INPUT-DELAY-'])
 			time_change = datetime.timedelta(seconds=delay_between_photos)
 			
+		if event == '-LIGHT-THRESHOLD-':
+			if constrainNumberInput(window, '-LIGHT-THRESHOLD-', length = 4):
+				#constrainNumberInput returned True, which means it has reverted the change. Skip
+				continue
+
+			#Finally we can set our values
+			light_threshold = int(values['-LIGHT-THRESHOLD-'])
+
 		if event == gui.TIMEOUT_KEY:
 			#only run if runTimelapse is True
 			if not runTimelapse:
