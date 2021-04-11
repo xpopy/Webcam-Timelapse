@@ -202,7 +202,7 @@ def main():
 				continue
 
 			#Finally we can set our values
-			delay_between_photos = int(values['-INPUT-DELAY-'])
+			delay_between_photos = float(values['-INPUT-DELAY-'])
 			time_change = datetime.timedelta(seconds=delay_between_photos)
 			
 		if event == '-LIGHT-THRESHOLD-':
@@ -211,7 +211,7 @@ def main():
 				continue
 
 			#Finally we can set our values
-			light_threshold = int(values['-LIGHT-THRESHOLD-'])
+			light_threshold = float(values['-LIGHT-THRESHOLD-'])
 
 		if event == gui.TIMEOUT_KEY:
 			#only run if runTimelapse is True
