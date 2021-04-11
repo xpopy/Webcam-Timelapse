@@ -134,27 +134,30 @@ def main():
 	layout = [
 		[gui.Text(key="-TIME-LEFT-", text="", size=(40, 1))],
 		[gui.Image(key="-IMAGE-")],
-		[gui.Text(key="-STATUS-", text="", size=(40, 1))],
-		[	
-			gui.Input(key='-INPUT-DELAY-', default_text = "300", enable_events=True, size = (6, None)), 
-			gui.Text(key="-INPUT-DELAY-DESC-", text="Delay in s (ex: 300 = a photo every 5 minutes)"),
-		],
-		[	
-			gui.Input(key='-LIGHT-THRESHOLD-', default_text = "0.3", enable_events=True, size = (4, None)), 
-			gui.Text(key="-LIGHT-THRESHOLD-DESC-", text="Light threshold for images, 0-1, where 0 disables it "),
-		],
-		[
-			gui.Button("Test Camera"),
-			gui.Button("Start Camera"),
-		],
+		[gui.Text(key="-STATUS-", text="", size=(40,1))],
+		[gui.Frame('', [
+			[	
+				gui.Input(key='-INPUT-DELAY-', default_text = "300", justification='right', enable_events=True, size = (5, None)), 
+				gui.Text(key="-INPUT-DELAY-DESC-", text="Delay in s (300 = every 5 minutes)"),
+			],
+			[	
+				gui.Input(key='-LIGHT-THRESHOLD-', default_text = "0.3", justification='right', enable_events=True, size = (5, None)), 
+				gui.Text(key="-LIGHT-THRESHOLD-DESC-", text="Light threshold, between 0 and 1, 0 = disabled "),
+			],
+			[
+				gui.Button("Test Camera"),
+				gui.Button("Start Camera"),
+			],
+		], key="-INPUT-FRAME-", visible=False, relief=gui.RELIEF_FLAT)],
 	]
-	window = gui.Window("Timelapse", layout, finalize=True)
-
-
+	window = gui.Window("Timelapse", layout)
+	window.finalize()
 	#Load the camera, can take a few seconds depending on camera
 	setStatus(window, "Loading camera, this might take a while...")
+	window.finalize()
 	camera = prepareCamera()
 	setStatus(window, "Camera loaded, select your move...")
+	window["-INPUT-FRAME-"].update(visible=True)
 
 	#Set up some variables
 	runTimelapse = False
