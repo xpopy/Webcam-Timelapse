@@ -39,7 +39,8 @@ def lighterThanThreshold(image, dim = 10, threshold = 0.3):
 	# Convert color space to LAB format and extract L channel
 	L, A, B = cv2.split(cv2.cvtColor(res_image, cv2.COLOR_BGR2LAB))
 	# Normalize L channel by dividing all pixel values with maximum pixel value
-	L = L/np.max(L)
+	max = 1/255
+	L = L * max
 	#Return True if the mean pixel brightness is larger than the threshold
 	return( np.mean(L) > threshold)
 
