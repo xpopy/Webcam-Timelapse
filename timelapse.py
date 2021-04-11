@@ -2,7 +2,6 @@ import io
 import os
 import cv2
 import datetime
-import numpy as np
 import PySimpleGUI as gui
 from PIL import Image
 
