@@ -32,6 +32,16 @@ def convertCV2toImage(cv2image):
 	cv2image_rgb = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB) 
 	return Image.fromarray(cv2image_rgb)
 
+def lighterThanThreshold(image, dim = 10, threshold = 0.3):
+	#Resize image
+	res_image = cv2.resize(image, (dim, dim))
+	# Convert color space to LAB format and extract L channel
+	L, A, B = cv2.split(cv2.cvtColor(res_image, cv2.COLOR_BGR2LAB))
+	# Normalize L channel by dividing all pixel values with maximum pixel value
+	L = L/np.max(L)
+	#Return True if the mean pixel brightness is larger than the threshold
+	print( np.mean(L) > threshold)
+
 def updatePreview(window, image, preview_width, preview_height):
 	image = convertCV2toImage(image)
 	image.thumbnail((preview_width, preview_height))
@@ -88,6 +98,7 @@ def main():
 	preview_height = 800
 	delay_between_photos = 5 #in seconds
 	overlay_date_on_images = True
+	light_threshold = 0
 	
 	#Create the image folder if it doesn't exist
 	setupFolder(image_folder)
@@ -192,13 +203,18 @@ def main():
 
 			#Take a photo, save it to disk and update the preview with it
 			image = takePhoto(camera, overlay_date_on_images)
-			saveImage(image_folder, image_name, image_type, image, image_index)
+
+			#Only save the image if it's bright enough
+			if lighterThanThreshold(image, threshold = light_threshold):
+				saveImage(image_folder, image_name, image_type, image, image_index)
+				image_index += 1
+			else:
+				setStatus(window, "Didn't save image as it was too dark")
+
 			updatePreview(window, image, preview_width, preview_height)
 
-			#Increment image index for name, and set time for next photo
-			image_index+= 1
+			#Set time for next photo
 			next_photo_time = now + time_change
-
 			updateCountdown(window, next_photo_time)
 
 
