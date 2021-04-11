@@ -41,7 +41,7 @@ def lighterThanThreshold(image, dim = 10, threshold = 0.3):
 	# Normalize L channel by dividing all pixel values with maximum pixel value
 	L = L/np.max(L)
 	#Return True if the mean pixel brightness is larger than the threshold
-	print( np.mean(L) > threshold)
+	return( np.mean(L) > threshold)
 
 def updatePreview(window, image, preview_width, preview_height):
 	image = convertCV2toImage(image)
