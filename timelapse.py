@@ -70,7 +70,7 @@ def takePhoto(camera, add_date=False):
 		position = (30, 50)
 		font_scale = 1
 		thickness = 1
-		frame = cv2.putText(cv2image, date_now,	position, font, font_scale, green, thickness, cv2.LINE_AA)
+		cv2.putText(cv2image, date_now,	position, font, font_scale, green, thickness, cv2.LINE_AA)
 	return cv2image
 
 def saveImage(image_folder, image_name, image_type, image, i):
