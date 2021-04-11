@@ -33,6 +33,15 @@ def convertCV2toImage(cv2image):
 	cv2image_rgb = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB) 
 	return Image.fromarray(cv2image_rgb)
 
+def calculatePixelMean(matrix):
+	sum = 0
+	index = 0
+	for row in matrix:
+		for pixel in row:
+			sum += pixel
+			index += 1
+	return sum / index
+
 def lighterThanThreshold(image, dim = 10, threshold = 0.3):
 	#Resize image
 	res_image = cv2.resize(image, (dim, dim))
@@ -42,7 +51,7 @@ def lighterThanThreshold(image, dim = 10, threshold = 0.3):
 	max = 1/255
 	L = L * max
 	#Return True if the mean pixel brightness is larger than the threshold
-	return( np.mean(L) > threshold)
+	return( calculatePixelMean(L) > threshold)
 
 def updatePreview(window, image, preview_width, preview_height):
 	image = convertCV2toImage(image)
