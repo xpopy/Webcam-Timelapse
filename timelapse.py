@@ -198,7 +198,7 @@ def main():
 		
 		if event == '-INPUT-DELAY-':
 			if constrainNumberInput(window, '-INPUT-DELAY-', length = 5):
-				#constrainNumberInput returned True, which means it has reverted the change. Skip
+				#constrainNumberInput returned True, which means it has constrained the input. Skip
 				continue
 
 			#Finally we can set our values
@@ -207,7 +207,7 @@ def main():
 			
 		if event == '-LIGHT-THRESHOLD-':
 			if constrainNumberInput(window, '-LIGHT-THRESHOLD-', length = 4):
-				#constrainNumberInput returned True, which means it has reverted the change. Skip
+				#constrainNumberInput returned True, which means it has constrained the input. Skip
 				continue
 
 			#Finally we can set our values
